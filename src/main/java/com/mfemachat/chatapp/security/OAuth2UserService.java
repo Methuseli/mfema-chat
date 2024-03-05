@@ -14,6 +14,7 @@ import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -33,6 +34,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class OAuth2UserService
   implements ReactiveOAuth2UserService<OidcUserRequest, OidcUser> {
+  private PasswordEncoder passwordEncoder;
 
   private UserRepository userRepository;
   private RoleRepository roleRepository;
@@ -52,11 +54,13 @@ public class OAuth2UserService
   public OAuth2UserService(
     UserRepository userRepository,
     RoleRepository roleRepository,
-    CustomSQL customSQL
+    CustomSQL customSQL,
+    PasswordEncoder passwordEncoder
   ) {
     this.userRepository = userRepository;
     this.roleRepository = roleRepository;
     this.customSQL = customSQL;
+    this.passwordEncoder = passwordEncoder;
   }
 
   @Override
@@ -126,9 +130,11 @@ public class OAuth2UserService
                   user.getId()
                 );
                 Set<Role> roles = new HashSet<>();
-                userRoles.flatMap(userRole ->
-                  roleRepository.findById(userRole.getRoleUuid())
-                ).subscribe(roles::add);
+                userRoles
+                  .flatMap(userRole ->
+                    roleRepository.findById(userRole.getRoleUuid())
+                  )
+                  .subscribe(roles::add);
                 user.setRoles(roles);
 
                 return oidcUserInfoMono
@@ -188,7 +194,7 @@ public class OAuth2UserService
     user.setEmail(userInfo.getEmail());
     user.setFirstname(splitName[0]);
     user.setLastname(splitName[splitName.length - 1]);
-    user.setPassword(password);
+    user.setPassword(passwordEncoder.encode(password));
     user.setMiddlename("");
     return roleRepository
       .findByName("USER")

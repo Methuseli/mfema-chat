@@ -3,6 +3,8 @@ package com.mfemachat.chatapp.config;
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.data.UserRepository;
 import com.mfemachat.chatapp.security.OAuth2UserService;
+import com.mfemachat.chatapp.service.UserService;
+import com.mfemachat.chatapp.service.UserServiceImpl;
 import com.mfemachat.chatapp.util.CustomSQL;
 import com.mfemachat.chatapp.util.UserMapper;
 import org.mapstruct.factory.Mappers;
@@ -12,6 +14,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.authentication.ReactiveOidcIdTokenDecoderFactory;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -46,6 +50,11 @@ public class SecurityConfig {
   }
 
   @Bean
+  public UserService userService(){
+    return new UserServiceImpl(userRepository, userMapper(), customSQL);
+  }
+
+  @Bean
   public SecurityWebFilterChain configure(ServerHttpSecurity http) {
     return http
       .authorizeExchange(authorize ->
@@ -60,11 +69,17 @@ public class SecurityConfig {
   }
 
   @Bean
+  public PasswordEncoder encoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  @Bean
   public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> oidcUserService() {
     final OAuth2UserService delegate = new OAuth2UserService(
       userRepository,
       roleRepository,
-      customSQL
+      customSQL,
+      encoder()
     );
 
     return delegate::loadUser;

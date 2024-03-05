@@ -19,6 +19,12 @@ public class UserServiceImpl implements UserService {
   private UserMapper userMapper;
   private CustomSQL customSQL;
 
+  public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, CustomSQL customSQL){
+    this.userRepository = userRepository;
+    this.userMapper = userMapper;
+    this.customSQL = customSQL;
+  }
+
   @Override
   @Transactional
   public Mono<User> createUser(User user) {

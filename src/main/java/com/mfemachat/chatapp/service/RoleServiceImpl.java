@@ -3,6 +3,9 @@ package com.mfemachat.chatapp.service;
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.models.Role;
 import java.util.UUID;
+
+import org.springframework.transaction.annotation.Transactional;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +18,7 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
+  @Transactional
   public Mono<Role> createRole(Role role) {
     return roleRepository
       .existsByName(role.getName())
@@ -35,6 +39,7 @@ public class RoleServiceImpl implements RoleService {
 
   @SuppressWarnings("null")
   @Override
+  @Transactional
   public Mono<Void> deleteRoleById(UUID roleId) {
     return roleRepository.deleteById(roleId);
   }
@@ -45,6 +50,7 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
+  @Transactional
   public Mono<Void> deleteAllRoles() {
     return roleRepository.deleteAll();
   }

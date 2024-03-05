@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,7 @@ public class CustomSQL {
   }
 
   @SuppressWarnings("null")
+  @Transactional
   public Mono<UserRole> saveUserRoles(UUID userId, UUID roleId) {
     Mono<Void> insertOperation = databaseClient
       .sql(
@@ -50,6 +52,7 @@ public class CustomSQL {
     );
   }
 
+  @Transactional
   public Mono<Void> deleteAllUserRoles() {
     return databaseClient
       .sql("DELETE FROM users_roles")
@@ -58,6 +61,7 @@ public class CustomSQL {
       .then();
   }
 
+  @Transactional
   @SuppressWarnings("null")
   public Mono<Void> deleteUserRolesById(UUID userId) {
     return databaseClient

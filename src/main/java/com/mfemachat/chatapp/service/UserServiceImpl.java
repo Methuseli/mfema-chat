@@ -9,6 +9,7 @@ import com.mfemachat.chatapp.util.UserMapper;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +20,7 @@ public class UserServiceImpl implements UserService {
   private CustomSQL customSQL;
 
   @Override
+  @Transactional
   public Mono<User> createUser(User user) {
     return userRepository
       .existsByEmail(user.getEmail())
@@ -27,17 +29,16 @@ public class UserServiceImpl implements UserService {
           throw new IllegalStateException("User with email already exists");
         } else {
           return userRepository
-            .save(user)
-            .flatMap(savedUser -> {
-              user
-                .getRoles()
-                .stream()
-                .map(role ->
-                  customSQL.saveUserRoles(savedUser.getId(), role.getId())
-                );
-              return Mono.just(savedUser);
-            });
+            .save(user);
         }
+      }).flatMap(savedUser -> {
+        user
+          .getRoles()
+          .stream()
+          .map(role ->
+            customSQL.saveUserRoles(savedUser.getId(), role.getId())
+          );
+        return Mono.just(savedUser);
       });
   }
 
@@ -54,6 +55,7 @@ public class UserServiceImpl implements UserService {
 
   @SuppressWarnings("null")
   @Override
+  @Transactional
   public Mono<User> updateUser(UserUpdateDto userDto, UUID id) {
     return userRepository
       .findById(id)
@@ -87,7 +89,8 @@ public class UserServiceImpl implements UserService {
   }
 
   @SuppressWarnings("null")
-@Override
+  @Override
+  @Transactional
   public Mono<Void> deleteUserById(UUID id) {
     userRepository
       .findById(id)
@@ -96,6 +99,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
   public Mono<Void> deleteUserByEmail(String email) {
     userRepository
       .findByEmail(email)
@@ -104,6 +108,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
   public Mono<Void> deleteAllUsers() {
     userRepository
       .findAll()

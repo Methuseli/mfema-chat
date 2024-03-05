@@ -6,13 +6,12 @@ import com.mfemachat.chatapp.exception.OidcAuthenticationProcessingException;
 import com.mfemachat.chatapp.models.Role;
 import com.mfemachat.chatapp.models.User;
 import com.mfemachat.chatapp.util.CustomSQL;
-
-import lombok.extern.slf4j.Slf4j;
-
+import com.mfemachat.chatapp.util.UserRole;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
@@ -28,6 +27,7 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.util.ObjectUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -69,12 +69,14 @@ public class OAuth2UserService
     // Delegate to the default implementation for loading a user
     return delegate
       .loadUser(userRequest)
-      .flatMap(oidcUser -> 
-        processOAuth2User(userRequest, oidcUser))
-      .doOnError(error -> log.error("Error processing OAuth2 user: {}", error.getMessage()));
+      .flatMap(oidcUser -> processOAuth2User(userRequest, oidcUser))
+      .doOnError(error ->
+        log.error("Error processing OAuth2 user: {}", error.getMessage())
+      );
     // };
   }
 
+  @SuppressWarnings("null")
   private Mono<OidcUser> processOAuth2User(
     OidcUserRequest oidcUserRequest,
     OidcUser oidcUser
@@ -119,7 +121,31 @@ public class OAuth2UserService
                     " account to login."
                   );
                 }
-                return Mono.empty();
+
+                Flux<UserRole> userRoles = customSQL.getUserRolesByUserId(
+                  user.getId()
+                );
+                Set<Role> roles = new HashSet<>();
+                userRoles.flatMap(userRole ->
+                  roleRepository.findById(userRole.getRoleUuid())
+                ).subscribe(roles::add);
+                user.setRoles(roles);
+
+                return oidcUserInfoMono
+                  .flatMap(oidcUserInfo ->
+                    UserPrincipal.create(
+                      Mono.just(user),
+                      userInfo.getAttributes(),
+                      oidcUserRequest.getIdToken(),
+                      oidcUserInfo
+                    )
+                  )
+                  .doOnError(error ->
+                    log.error(
+                      "Error creating UserPrincipal {}",
+                      error.getMessage()
+                    )
+                  );
               } else {
                 throw new OidcAuthenticationProcessingException(
                   "Looks like you signed up directly to the system Please use your email or username to login."
@@ -127,67 +153,80 @@ public class OAuth2UserService
               }
             });
         } else {
-          return oidcUserInfoMono.flatMap(oidcUserInfo -> 
-            UserPrincipal.create(
-              registerNewUser(oidcUserRequest, userInfo),
-              userInfo.getAttributes(),
-              oidcUserRequest.getIdToken(),
-              oidcUserInfo
+          return oidcUserInfoMono
+            .flatMap(oidcUserInfo ->
+              UserPrincipal.create(
+                registerNewUser(oidcUserRequest, userInfo),
+                userInfo.getAttributes(),
+                oidcUserRequest.getIdToken(),
+                oidcUserInfo
+              )
             )
-          );
+            .doOnError(error ->
+              log.error("Error creating UserPrincipal {}", error.getMessage())
+            );
         }
       });
   }
 
+  @SuppressWarnings("null")
+  // @Transactional
   private Mono<User> registerNewUser(
     OidcUserRequest oidcUserRequest,
     UserInfo userInfo
   ) {
+    log.info("Register new user");
     User user = new User();
     String[] splitName = userInfo.getName().split(" ");
     String password = RandomStringUtils.randomAlphanumeric(16);
     String username = userInfo.getName().replaceAll("\\s", "");
 
-    return getUsername(username)
-      .flatMap(availableUsername -> {
-        user.setAuthProvider(
-          oidcUserRequest.getClientRegistration().getRegistrationId()
-        );
-        user.setUsername(availableUsername);
-        user.setEmail(userInfo.getEmail());
-        user.setFirstname(splitName[0]);
-        user.setLastname(splitName[splitName.length - 1]);
-        user.setPassword(password);
-        user.setMiddlename("");
-        return roleRepository
-          .findByName("USER")
-          .flatMap(role -> {
-            Set<Role> roles = new HashSet<>();
-            roles.add(role);
-            user.setRoles(roles);
-            return userRepository
-              .save(user)
-              .flatMap(newUser -> {
-                customSQL.saveUserRoles(newUser.getId(), role.getId());
-                return Mono.just(newUser);
-              });
-          });
+    user.setAuthProvider(
+      oidcUserRequest.getClientRegistration().getRegistrationId()
+    );
+    user.setUsername(username);
+    user.setEmail(userInfo.getEmail());
+    user.setFirstname(splitName[0]);
+    user.setLastname(splitName[splitName.length - 1]);
+    user.setPassword(password);
+    user.setMiddlename("");
+    return roleRepository
+      .findByName("USER")
+      // .switchIfEmpty(roleRepository.save(Role.builder().name("USER").build()))
+      .doOnNext(role -> log.debug("Role: {}", role.getName()))
+      .flatMap(role -> {
+        log.debug("1st Flat map");
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
+        user.setRoles(roles);
+        return userRepository
+          .save(user)
+          .flatMap(newUser -> {
+            log.info("Roles: {}", newUser.getRoles());
+            return customSQL
+              .saveUserRoles(newUser.getId(), role.getId())
+              .then(Mono.just(newUser))
+              .doOnError(error ->
+                log.error("Error saving user roles: {}", error)
+              );
+          })
+          .doOnError(error ->
+            log.error("Error adding user roles: {}", error.getMessage())
+          );
       });
   }
 
-  private Mono<String> getUsername(String username) {
-    return Mono.defer(() -> {
-      final String newUsername =
-        username + RandomStringUtils.randomAlphanumeric(1);
-      return userRepository
-        .existsByUsername(newUsername)
-        .flatMap(userExists ->
-          Boolean.TRUE.equals(userExists)
-            ? getUsername(newUsername)
-            : Mono.just(newUsername)
-        );
-    });
-  }
+  // private Mono<String> getUsername(String username) {
+  //   final String newUsername =
+  //     username + RandomStringUtils.randomAlphanumeric(1);
+  //   return userRepository
+  //     .existsByUsername(newUsername)
+  //     .flatMap(userExists ->
+  //       Boolean.TRUE.equals(userExists)
+  //         ? getUsername(newUsername)
+  //         : Mono.just(newUsername)
+  //     );
+  // }
 
   private Mono<OidcUserInfo> getUserInfo(OidcUserRequest userRequest) {
     return this.defaultOauth2UserService.loadUser(userRequest)

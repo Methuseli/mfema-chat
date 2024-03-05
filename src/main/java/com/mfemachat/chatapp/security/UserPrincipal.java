@@ -1,6 +1,9 @@
 package com.mfemachat.chatapp.security;
 
 import com.mfemachat.chatapp.models.User;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +17,7 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
 import reactor.core.publisher.Mono;
 
+@Slf4j
 public class UserPrincipal extends DefaultOidcUser implements UserDetails {
 
   private UUID id;
@@ -46,7 +50,9 @@ public class UserPrincipal extends DefaultOidcUser implements UserDetails {
 
   public static Mono<UserPrincipal> create(Mono<User> userMono, OidcIdToken idToken, OidcUserInfo userInfo) {
     return userMono.flatMap(user ->
-      Mono.just(
+      {
+        log.info("User roles {} ", user.getRoles());
+        return Mono.just(
         new UserPrincipal(
           user.getId(),
           user.getEmail(),
@@ -60,7 +66,7 @@ public class UserPrincipal extends DefaultOidcUser implements UserDetails {
             idToken,
             userInfo
         )
-      )
+      );}
     );
   }
 
@@ -70,8 +76,9 @@ public class UserPrincipal extends DefaultOidcUser implements UserDetails {
     OidcIdToken idToken, 
     OidcUserInfo oidcUserInfo
   ) {
+    log.debug(idToken.toString());
     Mono<UserPrincipal> userPrincipal = UserPrincipal.create(user, idToken, oidcUserInfo);
-    userPrincipal.subscribe(userSub -> userSub.setAttributes(attributes));
+    userPrincipal.doOnNext(userSub -> userSub.setAttributes(attributes));
     return userPrincipal;
   }
 

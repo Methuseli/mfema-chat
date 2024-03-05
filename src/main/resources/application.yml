@@ -16,4 +16,11 @@ spring:
 
 logging:
     level:
-        root: debug
+        root: info
+
+
+app:
+    token-secret: oD6H8sRyxfeXQsv2jnnHy2FQ8C2tzNbU
+    token-expiration-msec: 864000000
+    cookie-name: user-cookie
+

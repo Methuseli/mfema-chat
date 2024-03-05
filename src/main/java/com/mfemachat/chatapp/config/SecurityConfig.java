@@ -51,7 +51,7 @@ public class SecurityConfig {
 
   @Bean
   public UserService userService(){
-    return new UserServiceImpl(userRepository, userMapper(), customSQL);
+    return new UserServiceImpl(userRepository, userMapper(), customSQL, roleRepository);
   }
 
   @Bean

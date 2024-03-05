@@ -6,7 +6,6 @@ import com.mfemachat.chatapp.exception.OidcAuthenticationProcessingException;
 import com.mfemachat.chatapp.models.Role;
 import com.mfemachat.chatapp.models.User;
 import com.mfemachat.chatapp.util.CustomSQL;
-import com.mfemachat.chatapp.util.UserRole;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,12 +27,12 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.util.ObjectUtils;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 public class OAuth2UserService
   implements ReactiveOAuth2UserService<OidcUserRequest, OidcUser> {
+
   private PasswordEncoder passwordEncoder;
 
   private UserRepository userRepository;
@@ -126,21 +125,22 @@ public class OAuth2UserService
                   );
                 }
 
-                Flux<UserRole> userRoles = customSQL.getUserRolesByUserId(
-                  user.getId()
-                );
-                Set<Role> roles = new HashSet<>();
-                userRoles
+                Mono<User> monoUser = customSQL
+                  .getUserRolesByUserId(user.getId())
                   .flatMap(userRole ->
                     roleRepository.findById(userRole.getRoleUuid())
                   )
-                  .subscribe(roles::add);
-                user.setRoles(roles);
+                  .collectList()
+                  .doOnNext(rolesList -> {
+                    log.info("Roles List {} ", rolesList);
+                    user.setRoles(new HashSet<>(rolesList));
+                  })
+                  .thenReturn(user);
 
                 return oidcUserInfoMono
                   .flatMap(oidcUserInfo ->
                     UserPrincipal.create(
-                      Mono.just(user),
+                      monoUser,
                       userInfo.getAttributes(),
                       oidcUserRequest.getIdToken(),
                       oidcUserInfo

@@ -185,12 +185,12 @@ public class OAuth2UserService
     User user = new User();
     String[] splitName = userInfo.getName().split(" ");
     String password = RandomStringUtils.randomAlphanumeric(16);
-    String username = userInfo.getName().replaceAll("\\s", "");
+    // String username = userInfo.getName().replaceAll("\\s", "");
 
     user.setAuthProvider(
       oidcUserRequest.getClientRegistration().getRegistrationId()
     );
-    user.setUsername(username);
+    user.setUsername(userInfo.getEmail());
     user.setEmail(userInfo.getEmail());
     user.setFirstname(splitName[0]);
     user.setLastname(splitName[splitName.length - 1]);

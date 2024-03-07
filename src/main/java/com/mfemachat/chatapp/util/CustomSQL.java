@@ -1,17 +1,16 @@
 package com.mfemachat.chatapp.util;
 
 import java.util.UUID;
-
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 public class CustomSQL {
-    private DatabaseClient databaseClient;
+
+  private DatabaseClient databaseClient;
   private static final String ID_USER_STRING = "userId";
   private static final String ID_ROLE_STRING = "roleId";
   private static final String USER_ID_STRING = "user_id";
@@ -99,5 +98,4 @@ public class CustomSQL {
       )
       .all();
   }
-
 }

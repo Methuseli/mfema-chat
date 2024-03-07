@@ -2,6 +2,9 @@ package com.mfemachat.chatapp.service;
 
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.models.Role;
+
+import lombok.AllArgsConstructor;
+
 import java.util.UUID;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -9,13 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@AllArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
   private RoleRepository roleRepository;
-
-  public RoleServiceImpl(RoleRepository roleRepository) {
-    this.roleRepository = roleRepository;
-  }
 
   @Override
   @Transactional

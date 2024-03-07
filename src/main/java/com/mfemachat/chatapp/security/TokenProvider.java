@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TokenProvider {
 
-  WebConfig appConfig;
+  private WebConfig appConfig;
   private static final String ALGORITHM = "EdDSA";
 
   // @Autowired

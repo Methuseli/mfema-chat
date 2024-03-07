@@ -1,7 +1,11 @@
 package com.mfemachat.chatapp.security;
 
 import java.util.List;
+
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 // import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,22 +19,11 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 @Slf4j
+@AllArgsConstructor
 public class TokenAuthenticationFilter implements WebFilter {
-
-  private ServerSecurityContextRepository securityContextRepository;
   private TokenProvider tokenProvider;
   private ReactiveUserDetailsService userDetailsService;
-
-  // @Autowired
-  public TokenAuthenticationFilter(
-    TokenProvider tokenProvider,
-    ReactiveUserDetailsService userDetailsService,
-    ServerSecurityContextRepository securityContextRepository
-  ) {
-    this.tokenProvider = tokenProvider;
-    this.userDetailsService = userDetailsService;
-    this.securityContextRepository = securityContextRepository;
-  }
+  private ServerSecurityContextRepository securityContextRepository;
 
   @SuppressWarnings("null")
 @Override

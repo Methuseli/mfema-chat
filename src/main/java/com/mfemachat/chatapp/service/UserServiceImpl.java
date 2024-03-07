@@ -11,30 +11,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
+@AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
   private UserRepository userRepository;
   private UserMapper userMapper;
   private CustomSQL customSQL;
   private RoleRepository roleRepository;
-
-  public UserServiceImpl(
-    UserRepository userRepository,
-    UserMapper userMapper,
-    CustomSQL customSQL,
-    RoleRepository roleRepository
-  ) {
-    this.userRepository = userRepository;
-    this.userMapper = userMapper;
-    this.customSQL = customSQL;
-    this.roleRepository = roleRepository;
-  }
 
   @Override
   @Transactional

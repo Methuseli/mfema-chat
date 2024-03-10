@@ -1,12 +1,8 @@
 package com.mfemachat.chatapp.security;
 
 import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -21,13 +17,17 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @AllArgsConstructor
 public class TokenAuthenticationFilter implements WebFilter {
+
   private TokenProvider tokenProvider;
   private ReactiveUserDetailsService userDetailsService;
   private ServerSecurityContextRepository securityContextRepository;
 
   @SuppressWarnings("null")
-@Override
-  public Mono<Void> filter(@SuppressWarnings("null") ServerWebExchange exchange, @SuppressWarnings("null") WebFilterChain chain) {
+  @Override
+  public Mono<Void> filter(
+    @SuppressWarnings("null") ServerWebExchange exchange,
+    @SuppressWarnings("null") WebFilterChain chain
+  ) {
     log.debug("Token Filter executed");
     ServerHttpRequest request = exchange.getRequest();
     // ServerHttpResponse response = exchange.getResponse();
@@ -100,4 +100,3 @@ public class TokenAuthenticationFilter implements WebFilter {
     return tokenProvider.getJwtFromCookies(request);
   }
 }
-

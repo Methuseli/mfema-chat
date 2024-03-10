@@ -13,5 +13,10 @@
     "name": "app.cookie-name",
     "type": "java.lang.String",
     "description": "A description for 'app.cookie-name'"
+  },
+  {
+    "name": "app.authorized-redirect-uris",
+    "type": "java.lang.String",
+    "description": "A description for 'app.authorized-redirect-uris'"
   }
 ]}

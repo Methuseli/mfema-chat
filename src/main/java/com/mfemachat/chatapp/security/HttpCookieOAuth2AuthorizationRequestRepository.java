@@ -5,7 +5,6 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.server.WebFilterExchange;
@@ -36,7 +35,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
       .flatMap(cookie ->
         Mono.just(
           CookieUtils.deserialize(
-            (ResponseCookie) cookie,
+            cookie,
             OAuth2AuthorizationRequest.class
           )
         )

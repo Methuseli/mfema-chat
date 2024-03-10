@@ -2,6 +2,8 @@ package com.mfemachat.chatapp.security;
 
 import com.mfemachat.chatapp.exception.JwtAuthenticationException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class AuthenticationManager implements ReactiveAuthenticationManager {
 
   private TokenProvider tokenProvider;
@@ -19,6 +22,7 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
   @Override
   public Mono<Authentication> authenticate(Authentication authentication) {
     String authToken = authentication.getCredentials().toString();
+    log.info("Authentication token: {}", authToken);
     String username = this.tokenProvider.getUsernameFromToken(authToken);
     return Mono
       .just(this.tokenProvider.validateToken(authToken))

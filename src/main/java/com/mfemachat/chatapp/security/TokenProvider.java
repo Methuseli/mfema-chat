@@ -6,11 +6,13 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import java.nio.charset.StandardCharsets;
+// import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+// import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
 // import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpCookie;
@@ -23,7 +25,8 @@ import org.springframework.stereotype.Service;
 public class TokenProvider {
 
   private WebConfig appConfig;
-  private static final String ALGORITHM = "EdDSA";
+
+  // private static final String ALGORITHM = "EdDSA";
 
   // @Autowired
   public TokenProvider(WebConfig appConfig) {
@@ -33,13 +36,13 @@ public class TokenProvider {
   // Check out the following if the uncommented method fails "SecretKey key = Keys.hmacShaKeyFor(encodedKeyBytes);",
   // "SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretString));"
   //"SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(secretString));"
-  public SecretKey generateSecretKeyFromString(
-    String keyString,
-    String algorithm
-  ) {
-    byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
-    return new SecretKeySpec(keyBytes, algorithm);
-  }
+  // public SecretKey generateSecretKeyFromString(
+  //   String keyString,
+  //   String algorithm
+  // ) {
+  //   byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
+  //   return new SecretKeySpec(keyBytes, algorithm);
+  // }
 
   public String createToken(Authentication authentication) {
     log.debug("Creating token");
@@ -50,9 +53,8 @@ public class TokenProvider {
       now.getTime() + appConfig.getTokenExpirationMsec()
     );
 
-    SecretKey key = generateSecretKeyFromString(
-      appConfig.getTokenSecret(),
-      ALGORITHM
+    SecretKey key = Keys.hmacShaKeyFor(
+      Decoders.BASE64URL.decode(appConfig.getTokenSecret())
     );
 
     return Jwts
@@ -77,11 +79,13 @@ public class TokenProvider {
   }
 
   public String getUsernameFromToken(String token) {
-    SecretKey key = generateSecretKeyFromString(
-      appConfig.getTokenSecret(),
-      ALGORITHM
+    SecretKey key = Keys.hmacShaKeyFor(
+      Decoders.BASE64URL.decode(appConfig.getTokenSecret())
     );
     // Claims claims = Jwts.parser().decryptWith(key).;
+
+    log.info("Token: {}", token);
+
     Claims claims = Jwts
       .parser()
       .verifyWith(key)
@@ -93,9 +97,8 @@ public class TokenProvider {
   }
 
   public String generateTokenFromUsername(String username) {
-    SecretKey key = generateSecretKeyFromString(
-      appConfig.getTokenSecret(),
-      ALGORITHM
+    SecretKey key = Keys.hmacShaKeyFor(
+      Decoders.BASE64URL.decode(appConfig.getTokenSecret())
     );
     return Jwts
       .builder()
@@ -110,9 +113,8 @@ public class TokenProvider {
 
   public boolean validateToken(String authToken) {
     try {
-      SecretKey key = generateSecretKeyFromString(
-        appConfig.getTokenSecret(),
-        ALGORITHM
+      SecretKey key = Keys.hmacShaKeyFor(
+        Decoders.BASE64URL.decode(appConfig.getTokenSecret())
       );
       //   Jwts
       //     .parser()

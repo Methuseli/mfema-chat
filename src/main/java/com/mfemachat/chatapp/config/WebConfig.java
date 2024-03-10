@@ -1,11 +1,31 @@
 package com.mfemachat.chatapp.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class WebConfig {
+    private List<String> authorizedRedirectUris = new ArrayList<>();
+
+
+    /**
+     * @return the authorizedRedirectUris
+     */
+    public List<String> getAuthorizedRedirectUris() {
+        return authorizedRedirectUris;
+    }
+
+    /**
+     * @param authorizedRedirectUris the authorizedRedirectUris to set
+     */
+    public void setAuthorizedRedirectUris(List<String> authorizedRedirectUris) {
+        this.authorizedRedirectUris = authorizedRedirectUris;
+    }
+
     private String tokenSecret;
 
     /**

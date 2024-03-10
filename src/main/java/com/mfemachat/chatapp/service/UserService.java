@@ -1,5 +1,6 @@
 package com.mfemachat.chatapp.service;
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 public interface UserService {
-    public Mono<User> createUser(User user);
+    public Mono<User> createUser(User user, Set<UUID> roles);
 
     public Mono<User> getUserById(UUID id);
 
@@ -27,4 +28,8 @@ public interface UserService {
     public Mono<Void> deleteUserByEmail(String email);
 
     public Mono<Void> deleteAllUsers();
+
+    public Mono<Boolean> existsByEmail(String email);
+
+    public Mono<Boolean> existsById(UUID id);
 }

@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +26,25 @@ public class UserServiceImpl implements UserService {
   private CustomSQL customSQL;
   private RoleRepository roleRepository;
 
+  @SuppressWarnings("null")
   @Override
   @Transactional
-  public Mono<User> createUser(User user) {
+  public Mono<User> createUser(User user, Set<UUID> roles) {
+    roles
+      .stream()
+      .forEach(role ->
+        roleRepository
+          .existsById(role)
+          .map(exists -> {
+            if (Boolean.FALSE.equals(exists)) {
+              throw new IllegalArgumentException(
+                "Role with id " + role + " does not exist"
+              );
+            }
+            return Mono.empty();
+          })
+      );
+
     return userRepository
       .existsByEmail(user.getEmail())
       .flatMap(exists -> {
@@ -40,10 +55,14 @@ public class UserServiceImpl implements UserService {
         }
       })
       .flatMap(savedUser -> {
-        user
-          .getRoles()
+        roles
           .stream()
-          .map(role -> customSQL.saveUserRoles(savedUser.getId(), role.getId())
+          .map(role ->
+            customSQL
+              .saveUserRoles(savedUser.getId(), role)
+              .doOnError(error ->
+                log.error("Failed to save user roles {}", error)
+              )
           );
         return Mono.just(savedUser);
       });
@@ -134,5 +153,16 @@ public class UserServiceImpl implements UserService {
       .findAll()
       .map(user -> customSQL.deleteUserRolesById(user.getId()));
     return userRepository.deleteAll();
+  }
+
+  @Override
+  public Mono<Boolean> existsByEmail(String email) {
+    return userRepository.existsByEmail(email);
+  }
+
+  @SuppressWarnings("null")
+  @Override
+  public Mono<Boolean> existsById(UUID id) {
+    return userRepository.existsById(id);
   }
 }

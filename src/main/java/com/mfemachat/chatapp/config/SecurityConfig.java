@@ -12,7 +12,6 @@ import com.mfemachat.chatapp.service.UserService;
 import com.mfemachat.chatapp.service.UserServiceImpl;
 import com.mfemachat.chatapp.util.CustomSQL;
 import com.mfemachat.chatapp.util.UserMapper;
-import lombok.AllArgsConstructor;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -36,12 +35,14 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoderFactory;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.ServerAuthenticationFailureHandler;
+import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
-@AllArgsConstructor
+// @AllArgsConstructor
 public class SecurityConfig {
 
   @Autowired
@@ -50,8 +51,19 @@ public class SecurityConfig {
   @Autowired
   private WebConfig webConfig;
 
+  @Autowired
+  private ServerAuthenticationSuccessHandler authenticationSuccessHandler;
+
+  @Autowired
+  private ServerAuthenticationFailureHandler authenticationFailureHandler;
+
+  @Autowired
   private UserRepository userRepository;
+
+  @Autowired
   private RoleRepository roleRepository;
+
+  @Autowired
   private CustomSQL customSQL;
 
   @Bean
@@ -110,13 +122,21 @@ public class SecurityConfig {
           .anyExchange()
           .authenticated()
       )
-      .oauth2Login(oauth2 -> oauth2.authorizationRequestRepository(
-        serverAuthorizationRequestRepository()
-      ))
+      .oauth2Login(oauth2 ->
+        oauth2
+          .authorizationRequestRepository(
+            serverAuthorizationRequestRepository()
+          )
+          .authenticationFailureHandler(authenticationFailureHandler)
+          .authenticationSuccessHandler(authenticationSuccessHandler)
+      )
       .httpBasic(Customizer.withDefaults())
       .securityContextRepository(securityContextRepository())
       .authenticationManager(authenticationManager())
-      .addFilterAfter(tokenAuthenticationFilter(), SecurityWebFiltersOrder.AUTHORIZATION)
+      .addFilterAfter(
+        tokenAuthenticationFilter(),
+        SecurityWebFiltersOrder.AUTHORIZATION
+      )
       .build();
   }
 

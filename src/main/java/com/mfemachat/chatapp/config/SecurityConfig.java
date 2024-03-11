@@ -135,7 +135,7 @@ public class SecurityConfig {
       .authenticationManager(authenticationManager())
       .addFilterAfter(
         tokenAuthenticationFilter(),
-        SecurityWebFiltersOrder.AUTHORIZATION
+        SecurityWebFiltersOrder.HTTP_BASIC
       )
       .build();
   }

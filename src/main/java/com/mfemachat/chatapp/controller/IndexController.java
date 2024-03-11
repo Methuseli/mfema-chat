@@ -16,7 +16,7 @@ public class IndexController {
   @Autowired
   private UserService userService;
 
-  @GetMapping("/currentUser")
+  @GetMapping("/current-user")
   public Mono<ResponseEntity<User>> getCurrentUser(
     @CurrentUser UserPrincipal userPrincipal
   ) {
@@ -27,9 +27,7 @@ public class IndexController {
   }
 
   @GetMapping("/")
-  public Mono<String> home(
-    @CurrentUser UserPrincipal userPrincipal
-  ) {
+  public Mono<String> home() {
     return Mono.just("Welcome");
   }
 }

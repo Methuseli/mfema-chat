@@ -19,13 +19,13 @@ spring:
 
 logging:
     level:
-        root: info
+        root: debug
 
 
 app:
     token-secret: 396fc75a42d4a811d97e462dc54fcbd25023e644156df363a212a8832f5447da
     token-expiration-msec: 864000000
-    cookie-name: user-cookie
+    cookie-name: token
     authorized-redirect-uris: >
         http://localhost:8080/,
         http://localhost:3000/

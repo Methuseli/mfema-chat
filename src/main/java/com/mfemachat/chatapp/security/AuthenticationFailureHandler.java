@@ -68,12 +68,12 @@ public class AuthenticationFailureHandler
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME
       )
       .flatMap(cookie -> {
-        String targetUrl = "";
-        if (cookie.getValue().isEmpty()) {
-          targetUrl = cookie.getValue();
-        } else {
-          targetUrl = "/";
-        }
+        String targetUrl = "/error";
+        // if (cookie.getValue().isEmpty()) {
+        //   targetUrl = cookie.getValue();
+        // } else {
+        //   targetUrl = "/login";
+        // }
 
         targetUrl =
           UriComponentsBuilder
@@ -91,9 +91,9 @@ public class AuthenticationFailureHandler
           this.redirectStrategy.sendRedirect(
               webFilterExchange.getExchange(),
               location
-            );
+            ).subscribe();
         } catch (URISyntaxException ex) {
-          log.error("Error creating URI for " + targetUrl, ex);
+          log.error("Error creating URI for {}", ex.getMessage());
         }
         return Mono.empty();
       });

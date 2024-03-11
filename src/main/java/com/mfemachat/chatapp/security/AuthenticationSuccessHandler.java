@@ -62,11 +62,10 @@ public class AuthenticationSuccessHandler
 
         try {
           this.location = new URI(url);
-          this.redirectStrategy.sendRedirect(
+          return this.redirectStrategy.sendRedirect(
               webFilterExchange.getExchange(),
               location
             );
-          log.info("Redirected to {}", url);
         } catch (URISyntaxException ex) {
           log.error("Error creating URI for " + url, ex);
         }
@@ -85,7 +84,7 @@ public class AuthenticationSuccessHandler
         HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME
       )
       .map(HttpCookie::getValue)
-      .defaultIfEmpty("http://localhost:8080/");
+      .defaultIfEmpty("http://localhost:8080/current-user");
 
     return redirectUri.flatMap(uri -> {
       log.info("Redirect URI: {}", uri);

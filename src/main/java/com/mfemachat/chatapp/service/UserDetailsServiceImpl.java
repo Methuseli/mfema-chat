@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,17 +40,17 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
 
   @SuppressWarnings("null")
   @Override
-  public Mono<UserDetails> findByUsername(String email) {
+  public Mono<UserDetails> findByUsername(String id) {
     return userRepository
-      .existsByEmail(email)
+      .existsById(UUID.fromString(id))
       .flatMap(exists -> {
         if (!Boolean.TRUE.equals(exists)) {
           throw new UsernameNotFoundException(
-            "User with email " + email + " not found"
+            "User with id " + id + " not found"
           );
         } else {
           return userRepository
-            .findByEmail(email)
+            .findById(UUID.fromString(id))
             .flatMap(user ->
               customSQL
                 .getUserRolesByUserId(user.getId())
@@ -58,7 +59,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
                 )
                 .collectList()
                 .map(roleList ->
-                  new User(email, user.getPassword(), getAuthorities(roleList))
+                  new User(id, user.getPassword(), getAuthorities(roleList))
                 )
             ).doOnError(error -> log.error("Error laoding user: {} ", error.getMessage()));
         }

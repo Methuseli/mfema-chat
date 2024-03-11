@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+// import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
@@ -28,7 +29,7 @@ public class TokenAuthenticationFilter implements WebFilter {
     @SuppressWarnings("null") ServerWebExchange exchange,
     @SuppressWarnings("null") WebFilterChain chain
   ) {
-    log.debug("Token Filter executed");
+    // log.debug("Token Filter executed");
     ServerHttpRequest request = exchange.getRequest();
     // ServerHttpResponse response = exchange.getResponse();
 
@@ -40,17 +41,19 @@ public class TokenAuthenticationFilter implements WebFilter {
       StringUtils.hasText(jwtCookie) && tokenProvider.validateToken(jwtCookie)
     ) {
       username = tokenProvider.getUsernameFromToken(jwtCookie);
-      log.debug("Username JWT COOKIE" + username);
+      // log.debug("Username JWT COOKIE" + username);
     } else if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
       username = tokenProvider.getUsernameFromToken(jwt);
-      log.debug("Username JWT " + username);
+      // log.debug("Username JWT " + username);
+    } else {
+      return Mono.empty();
     }
 
-    log.debug("OutsideUsername " + username);
+    // log.debug("OutsideUsername " + username);
     return userDetailsService
       .findByUsername(username)
       .flatMap(userDetails -> {
-        log.debug("Userdetails " + userDetails);
+        // log.debug("Userdetails " + userDetails);
         if (userDetails != null) {
           UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             userDetails,
@@ -58,12 +61,15 @@ public class TokenAuthenticationFilter implements WebFilter {
             userDetails.getAuthorities()
           );
 
-          log.debug("Exchange ", exchange);
+          // log.debug("Exchange ", exchange);
 
           return ReactiveSecurityContextHolder
             .getContext()
             .flatMap(c -> {
-              c.setAuthentication(authentication);
+              if (c.getAuthentication() == null) {
+                log.debug("Setting authentication in context");
+                c.setAuthentication(authentication);
+              }
               return securityContextRepository
                 .save(exchange, c)
                 .then(chain.filter(exchange));

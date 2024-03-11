@@ -45,7 +45,7 @@ public class TokenProvider {
   // }
 
   public String createToken(Authentication authentication) {
-    log.debug("Creating token");
+    // log.debug("Creating token");
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
     Date now = new Date();
@@ -84,7 +84,7 @@ public class TokenProvider {
     );
     // Claims claims = Jwts.parser().decryptWith(key).;
 
-    log.info("Token: {}", token);
+    // log.info("Token: {}", token);
 
     Claims claims = Jwts
       .parser()

@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -25,6 +26,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.oidc.authentication.OidcAuthorizationCodeReactiveAuthenticationManager;
 import org.springframework.security.oauth2.client.oidc.authentication.ReactiveOidcIdTokenDecoderFactory;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -87,11 +90,6 @@ public class SecurityConfig {
     return new TokenProvider(webConfig);
   }
 
-  // @Bean
-  // ReactiveUserDetailsService userDetailsService() {
-  //   return new UserDetailsServiceImpl(userRepository, customSQL, roleRepository);
-  // }
-
   @Bean
   TokenAuthenticationFilter tokenAuthenticationFilter() {
     return new TokenAuthenticationFilter(
@@ -104,6 +102,14 @@ public class SecurityConfig {
   @Bean
   AuthenticationManager authenticationManager() {
     return new AuthenticationManager(tokenProvider(), userDetailsService);
+  }
+
+  @Bean
+  ReactiveAuthenticationManager oAuth2LoginReactiveAuthenticationManager() {
+    return new OidcAuthorizationCodeReactiveAuthenticationManager(
+      new WebClientReactiveAuthorizationCodeTokenResponseClient(),
+      oidcUserService()
+    );
   }
 
   @Bean
@@ -122,6 +128,7 @@ public class SecurityConfig {
           .anyExchange()
           .authenticated()
       )
+      // .oauth2Login(Customizer.withDefaults())
       .oauth2Login(oauth2 ->
         oauth2
           .authorizationRequestRepository(
@@ -129,13 +136,14 @@ public class SecurityConfig {
           )
           .authenticationFailureHandler(authenticationFailureHandler)
           .authenticationSuccessHandler(authenticationSuccessHandler)
+          .authenticationManager(oAuth2LoginReactiveAuthenticationManager())
       )
       .httpBasic(Customizer.withDefaults())
-      .securityContextRepository(securityContextRepository())
+      // .securityContextRepository(securityContextRepository())
       .authenticationManager(authenticationManager())
-      .addFilterAfter(
+      .addFilterBefore(
         tokenAuthenticationFilter(),
-        SecurityWebFiltersOrder.HTTP_BASIC
+        SecurityWebFiltersOrder.AUTHORIZATION
       )
       .build();
   }

@@ -4,8 +4,7 @@ package com.mfemachat.chatapp.util;
 // import java.io.IOException;
 import java.util.Base64;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
+// import lombok.extern.slf4j.Slf4j;
 // import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
@@ -15,7 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Mono;
 
-@Slf4j
+// @Slf4j
 @NoArgsConstructor
 public class CookieUtils {
 
@@ -29,7 +28,7 @@ public class CookieUtils {
     MultiValueMap<String, HttpCookie> cookies = request.getCookies();
 
     if (!cookies.isEmpty() && cookies.containsKey(name)) {
-      log.info("Cookie {} ", cookies);
+      // log.info("Cookie {} ", cookies);
       return Mono.just(cookies.getFirst(name));
     }
     return Mono.empty();

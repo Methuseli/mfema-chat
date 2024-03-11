@@ -66,7 +66,7 @@ public class OAuth2UserService
   public Mono<OidcUser> loadUser(OidcUserRequest userRequest)
     throws OAuth2AuthenticationException {
     final OidcReactiveOAuth2UserService delegate = new OidcReactiveOAuth2UserService();
-    log.debug("Overriding oauth2UserService");
+    log.info("Overriding oauth2UserService");
 
     // return (userRequest) -> {
     // Delegate to the default implementation for loading a user

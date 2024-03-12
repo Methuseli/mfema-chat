@@ -5,6 +5,7 @@ import com.mfemachat.chatapp.data.UserRepository;
 import com.mfemachat.chatapp.security.AuthenticationManager;
 import com.mfemachat.chatapp.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.mfemachat.chatapp.security.OAuth2UserService;
+import com.mfemachat.chatapp.security.RestAuthenticationEntryPoint;
 import com.mfemachat.chatapp.security.SecurityContextRepository;
 import com.mfemachat.chatapp.security.TokenAuthenticationFilter;
 import com.mfemachat.chatapp.security.TokenProvider;
@@ -90,14 +91,14 @@ public class SecurityConfig {
     return new TokenProvider(webConfig);
   }
 
-  @Bean
-  TokenAuthenticationFilter tokenAuthenticationFilter() {
-    return new TokenAuthenticationFilter(
-      tokenProvider(),
-      userDetailsService,
-      securityContextRepository()
-    );
-  }
+  // @Bean
+  // TokenAuthenticationFilter tokenAuthenticationFilter() {
+  //   return new TokenAuthenticationFilter(
+  //     tokenProvider(),
+  //     userDetailsService,
+  //     securityContextRepository()
+  //   );
+  // }
 
   @Bean
   AuthenticationManager authenticationManager() {
@@ -121,9 +122,12 @@ public class SecurityConfig {
   @Order(0)
   public SecurityWebFilterChain configure(ServerHttpSecurity http) {
     return http
+      .exceptionHandling(ex ->
+        ex.authenticationEntryPoint(new RestAuthenticationEntryPoint())
+      )
       .authorizeExchange(authorize ->
         authorize
-          .pathMatchers("/login/oauth2/code/**")
+          .pathMatchers("/login/oauth2/code/**", "/favicon.ico", "/logout")
           .permitAll()
           .anyExchange()
           .authenticated()
@@ -141,10 +145,10 @@ public class SecurityConfig {
       .httpBasic(Customizer.withDefaults())
       .securityContextRepository(securityContextRepository())
       .authenticationManager(authenticationManager())
-      .addFilterAfter(
-        tokenAuthenticationFilter(),
-        SecurityWebFiltersOrder.AUTHORIZATION
-      )
+      // .addFilterAfter(
+      //   tokenAuthenticationFilter(),
+      //   SecurityWebFiltersOrder.AUTHORIZATION
+      // )
       .build();
   }
 

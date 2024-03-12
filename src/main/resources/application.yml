@@ -6,6 +6,9 @@ spring:
                     google:
                         client-id: 706138419343-sonv0c5lbos4bpjqjd10lo1c0vr0k79k.apps.googleusercontent.com
                         client-secret: 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
+                    github:
+                        client-id: github-id
+                        client-secret: github-secret
     r2dbc:
         url: r2dbc:postgresql://localhost:5432/chatapp
         username: postgres

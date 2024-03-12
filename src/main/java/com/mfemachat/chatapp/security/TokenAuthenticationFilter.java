@@ -56,8 +56,8 @@ public class TokenAuthenticationFilter implements WebFilter {
         // log.debug("Userdetails " + userDetails);
         if (userDetails != null) {
           UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
+            userDetails.getUsername(),
+            userDetails.getPassword(),
             userDetails.getAuthorities()
           );
 

@@ -87,31 +87,41 @@ public class SecurityContextRepository
             session
           );
         } else {
-          log.debug("No SecurityContext found in WebSession: '%s'", session);
+          log.debug("No SecurityContext found in WebSession: {}", session);
         }
         return Mono.justOrEmpty(context);
       });
 
+    log.debug("Cached context", this.cacheSecurityContext);
+
     if (this.cacheSecurityContext) {
+      log.debug("Cache Securiy Context", this.cacheSecurityContext);
       return result.cache();
     } else {
-      return result.flatMap(context ->
-        context != null
-          ? Mono.justOrEmpty(context)
-          : CookieUtils
-            .getCookie(exchange.getRequest(), "token")
-            .map(HttpCookie::getValue)
-            .flatMap(token -> {
-              // log.info("Token {}", token);
-              Authentication auth = new UsernamePasswordAuthenticationToken(
-                token,
-                token
-              );
-              // log.info("Authentication: {}", auth);
-              return this.authenticationManager.authenticate(auth)
-                .map(SecurityContextImpl::new);
-            })
-      );
+      log.debug("Security context: {}", result);
+      return result
+        .flatMap(context ->
+          context != null
+            ? Mono.justOrEmpty(context)
+            : CookieUtils
+              .getCookie(exchange.getRequest(), "token")
+              .map(HttpCookie::getValue)
+              .flatMap(token -> {
+                // log.info("Token {}", token);
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                  token,
+                  token
+                );
+                // log.info("Authentication: {}", auth);
+                return this.authenticationManager.authenticate(auth)
+                  .map(SecurityContextImpl::new);
+              })
+        )
+        .doOnError(error ->
+          log.error(
+            "Failed to create security context: {}" + error.getMessage()
+          )
+        );
     }
   }
   // @Override

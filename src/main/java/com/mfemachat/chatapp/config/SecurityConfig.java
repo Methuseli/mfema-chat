@@ -139,9 +139,9 @@ public class SecurityConfig {
           .authenticationManager(oAuth2LoginReactiveAuthenticationManager())
       )
       .httpBasic(Customizer.withDefaults())
-      // .securityContextRepository(securityContextRepository())
+      .securityContextRepository(securityContextRepository())
       .authenticationManager(authenticationManager())
-      .addFilterBefore(
+      .addFilterAfter(
         tokenAuthenticationFilter(),
         SecurityWebFiltersOrder.AUTHORIZATION
       )

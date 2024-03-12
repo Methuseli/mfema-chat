@@ -19,7 +19,7 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
   @Override
   public Mono<Authentication> authenticate(Authentication authentication) {
     String authToken = authentication.getCredentials().toString();
-    String username = this.tokenProvider.getUsernameFromToken(authToken);
+    String username = this.tokenProvider.getJwtTokenSubject(authToken);
     return Mono
       .just(this.tokenProvider.validateToken(authToken))
       .filter(valid -> valid)

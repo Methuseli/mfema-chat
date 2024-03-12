@@ -78,7 +78,7 @@ public class TokenProvider {
     }
   }
 
-  public String getUsernameFromToken(String token) {
+  public String getJwtTokenSubject(String token) {
     SecretKey key = Keys.hmacShaKeyFor(
       Decoders.BASE64URL.decode(appConfig.getTokenSecret())
     );

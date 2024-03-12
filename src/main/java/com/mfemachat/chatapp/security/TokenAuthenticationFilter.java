@@ -35,15 +35,15 @@ public class TokenAuthenticationFilter implements WebFilter {
 
     String jwt = getJwtFromRequest(request);
     String jwtCookie = parseJwt(request);
-    String username = "";
+    String subject = "";
 
     if (
       StringUtils.hasText(jwtCookie) && tokenProvider.validateToken(jwtCookie)
     ) {
-      username = tokenProvider.getUsernameFromToken(jwtCookie);
+      subject = tokenProvider.getJwtTokenSubject(jwtCookie);
       // log.debug("Username JWT COOKIE" + username);
     } else if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-      username = tokenProvider.getUsernameFromToken(jwt);
+      subject = tokenProvider.getJwtTokenSubject(jwt);
       // log.debug("Username JWT " + username);
     } else {
       return Mono.empty();
@@ -51,7 +51,7 @@ public class TokenAuthenticationFilter implements WebFilter {
 
     // log.debug("OutsideUsername " + username);
     return userDetailsService
-      .findByUsername(username)
+      .findByUsername(subject)
       .flatMap(userDetails -> {
         // log.debug("Userdetails " + userDetails);
         if (userDetails != null) {

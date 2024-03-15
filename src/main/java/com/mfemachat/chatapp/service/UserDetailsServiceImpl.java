@@ -2,7 +2,7 @@ package com.mfemachat.chatapp.service;
 
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.data.UserRepository;
-import com.mfemachat.chatapp.exception.UserNotFoundException;
+import com.mfemachat.chatapp.exception.NotFoundException;
 import com.mfemachat.chatapp.models.Role;
 import com.mfemachat.chatapp.util.CustomSQL;
 
@@ -74,7 +74,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
       .existsById(UUID.fromString(id))
       .flatMap(exists -> {
         if (!Boolean.TRUE.equals(exists)) {
-          throw new UserNotFoundException(
+          throw new NotFoundException(
             "User with id " + id + " not found"
           );
         } else {
@@ -101,7 +101,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
       .existsByEmail(email)
       .flatMap(exists -> {
         if (!Boolean.TRUE.equals(exists)) {
-          throw new UserNotFoundException(
+          throw new NotFoundException(
             "User with email " + email + " not found"
           );
         } else {

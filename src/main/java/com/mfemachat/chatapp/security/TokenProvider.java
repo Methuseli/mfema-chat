@@ -96,13 +96,13 @@ public class TokenProvider {
     return claims.getSubject();
   }
 
-  public String generateTokenFromUsername(String username) {
+  public String generateTokenFromUserId(String id) {
     SecretKey key = Keys.hmacShaKeyFor(
       Decoders.BASE64URL.decode(appConfig.getTokenSecret())
     );
     return Jwts
       .builder()
-      .subject(username)
+      .subject(id)
       .issuedAt(new Date())
       .expiration(
         new Date((new Date()).getTime() + appConfig.getTokenExpirationMsec())

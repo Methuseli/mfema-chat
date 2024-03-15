@@ -3,11 +3,12 @@ package com.mfemachat.chatapp.config;
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.data.UserRepository;
 import com.mfemachat.chatapp.security.AuthenticationManager;
+import com.mfemachat.chatapp.security.CustomCsrfTokenRequestHandler;
 import com.mfemachat.chatapp.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.mfemachat.chatapp.security.OAuth2UserService;
 import com.mfemachat.chatapp.security.RestAuthenticationEntryPoint;
 import com.mfemachat.chatapp.security.SecurityContextRepository;
-import com.mfemachat.chatapp.security.TokenAuthenticationFilter;
+// import com.mfemachat.chatapp.security.TokenAuthenticationFilter;
 import com.mfemachat.chatapp.security.TokenProvider;
 import com.mfemachat.chatapp.service.UserService;
 import com.mfemachat.chatapp.service.UserServiceImpl;
@@ -22,7 +23,7 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+// import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -42,6 +43,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationFailureHandler;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -81,7 +83,8 @@ public class SecurityConfig {
       userRepository,
       userMapper(),
       customSQL,
-      roleRepository
+      roleRepository,
+      encoder()
     );
   }
 
@@ -125,9 +128,20 @@ public class SecurityConfig {
       .exceptionHandling(ex ->
         ex.authenticationEntryPoint(new RestAuthenticationEntryPoint())
       )
+      .csrf(csrf ->
+        csrf.csrfTokenRepository(new CookieServerCsrfTokenRepository())
+        .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler())
+      )
+      .securityContextRepository(securityContextRepository())
       .authorizeExchange(authorize ->
         authorize
-          .pathMatchers("/login/oauth2/code/**", "/favicon.ico", "/logout")
+          .pathMatchers(
+            "/login/oauth2/code/**",
+            "/favicon.ico",
+            "/api/v1/users/signup",
+            "/api/v1/users/login",
+            "/csrf"
+          )
           .permitAll()
           .anyExchange()
           .authenticated()
@@ -143,7 +157,6 @@ public class SecurityConfig {
           .authenticationManager(oAuth2LoginReactiveAuthenticationManager())
       )
       .httpBasic(Customizer.withDefaults())
-      .securityContextRepository(securityContextRepository())
       .authenticationManager(authenticationManager())
       // .addFilterAfter(
       //   tokenAuthenticationFilter(),

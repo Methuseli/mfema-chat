@@ -1,10 +1,9 @@
 package com.mfemachat.chatapp.service;
-
-import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.mfemachat.chatapp.dto.RegisterUserDto;
 import com.mfemachat.chatapp.dto.UserUpdateDto;
 import com.mfemachat.chatapp.models.User;
 
@@ -13,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 public interface UserService {
-    public Mono<User> createUser(User user, Set<UUID> roles);
+    public Mono<User> createUser(RegisterUserDto userDto);
 
     public Mono<User> getUserById(UUID id);
 

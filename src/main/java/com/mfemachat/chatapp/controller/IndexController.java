@@ -7,7 +7,9 @@ import com.mfemachat.chatapp.security.UserPrincipal;
 import com.mfemachat.chatapp.service.UserService;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -45,4 +47,22 @@ public class IndexController {
   public Mono<String> home() {
     return Mono.just("Welcome");
   }
+
+  @SuppressWarnings("null")
+  @GetMapping("/csrf")
+  public Mono<ResponseEntity<String>> csrfToken(ServerWebExchange exchange) {
+    Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
+    return csrfToken.map(token -> {
+      if(token == null) {
+        return ResponseEntity.badRequest().build();
+      } else {
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, token.getToken().toString()).body("");
+      }
+    });
+  }
+
+  // @GetMapping("/error")
+  // public Mono<ResponseEntity<?>> error() {
+
+  // }
 }

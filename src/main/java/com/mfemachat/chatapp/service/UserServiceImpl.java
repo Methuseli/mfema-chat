@@ -2,7 +2,10 @@ package com.mfemachat.chatapp.service;
 
 import com.mfemachat.chatapp.data.RoleRepository;
 import com.mfemachat.chatapp.data.UserRepository;
+import com.mfemachat.chatapp.dto.RegisterUserDto;
 import com.mfemachat.chatapp.dto.UserUpdateDto;
+import com.mfemachat.chatapp.exception.ConflictingRequestException;
+import com.mfemachat.chatapp.exception.NotFoundException;
 import com.mfemachat.chatapp.models.Role;
 import com.mfemachat.chatapp.models.User;
 import com.mfemachat.chatapp.util.CustomSQL;
@@ -13,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,48 +29,113 @@ public class UserServiceImpl implements UserService {
   private UserMapper userMapper;
   private CustomSQL customSQL;
   private RoleRepository roleRepository;
+  private PasswordEncoder passwordEncoder;
 
-  @SuppressWarnings("null")
   @Override
   @Transactional
-  public Mono<User> createUser(User user, Set<UUID> roles) {
-    roles
-      .stream()
-      .forEach(role ->
-        roleRepository
-          .existsById(role)
-          .map(exists -> {
-            if (Boolean.FALSE.equals(exists)) {
-              throw new IllegalArgumentException(
-                "Role with id " + role + " does not exist"
-              );
-            }
-            return Mono.empty();
-          })
-      );
-
+  public Mono<User> createUser(RegisterUserDto userDto) {
     return userRepository
-      .existsByEmail(user.getEmail())
+      .existsByEmail(userDto.getEmail())
       .flatMap(exists -> {
-        if (Boolean.TRUE.equals(exists)) {
-          throw new IllegalStateException("User with email already exists");
-        } else {
-          return userRepository.save(user);
-        }
-      })
-      .flatMap(savedUser -> {
-        roles
-          .stream()
-          .map(role ->
-            customSQL
-              .saveUserRoles(savedUser.getId(), role)
-              .doOnError(error ->
-                log.error("Failed to save user roles {}", error)
-              )
+        if (exists) {
+          return Mono.error(
+            new ConflictingRequestException("User with email already exists")
           );
-        return Mono.just(savedUser);
+        } else {
+          return saveUser(userDto);
+        }
       });
   }
+
+  @SuppressWarnings("null")
+  private Mono<User> saveUser(RegisterUserDto userDto) {
+    User user = User
+      .builder()
+      .username(userDto.getUsername())
+      .password(passwordEncoder.encode(userDto.getPassword()))
+      .email(userDto.getEmail())
+      .firstname(userDto.getFirstname())
+      .middlename(userDto.getMiddlename())
+      .lastname(userDto.getLastname())
+      .build();
+
+    return userRepository
+      .save(user)
+      .flatMap(savedUser -> saveRoles(savedUser, userDto.getRoles()))
+      .thenReturn(user);
+  }
+
+  @SuppressWarnings("null")
+  private Mono<Void> saveRoles(User user, Set<UUID> roleIds) {
+    if (roleIds == null || roleIds.isEmpty()) {
+      return roleRepository
+        .findByName("USER")
+        .flatMap(role -> customSQL.saveUserRoles(user.getId(), role.getId()))
+        .then();
+    } else {
+      return Flux
+        .fromIterable(roleIds)
+        .flatMap(roleId -> roleRepository.existsById(roleId))
+        .collectList()
+        .flatMap(existsList -> {
+          if (existsList.contains(false)) {
+            return Mono.error(
+              new NotFoundException("One or more roles do not exist")
+            );
+          } else {
+            return Flux
+              .fromIterable(roleIds)
+              .flatMap(roleId -> customSQL.saveUserRoles(user.getId(), roleId))
+              .then();
+          }
+        });
+    }
+  }
+
+  // @SuppressWarnings("null")
+  // @Transactional
+  // public Mono<User> createUser(User user, Set<UUID> roles) {
+  //   if (roles == null || roles.isEmpty()) {
+  //     roleRepository.findByName("USER").map(role -> roles.add(role.getId()));
+  //   } else {
+  //     roles
+  //       .stream()
+  //       .forEach(role ->
+  //         roleRepository
+  //           .existsById(role)
+  //           .map(exists -> {
+  //             if (Boolean.FALSE.equals(exists)) {
+  //               throw new NotFoundException(
+  //                 "Role with id " + role + " does not exist"
+  //               );
+  //             }
+  //             return Mono.empty();
+  //           })
+  //       );
+  //   }
+
+  //   return userRepository
+  //     .existsByEmail(user.getEmail())
+  //     .flatMap(exists -> {
+  //       if (Boolean.TRUE.equals(exists)) {
+  //         throw new ConflictingRequestException("User with email already exists");
+  //       } else {
+  //         return userRepository.save(user);
+  //       }
+  //     })
+  //     .flatMap(savedUser -> {
+  //       roles
+  //         .stream()
+  //         .map(role ->
+  //           customSQL
+  //             .saveUserRoles(savedUser.getId(), role)
+  //             .doOnError(error ->
+  //               log.error("Failed to save user roles {}", error)
+  //             )
+  //         );
+  //       return Mono.just(savedUser);
+  //     });
+  // }
 
   @SuppressWarnings("null")
   @Override

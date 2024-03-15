@@ -2,11 +2,12 @@ package com.mfemachat.chatapp.controller;
 
 import com.mfemachat.chatapp.dto.LoginDto;
 import com.mfemachat.chatapp.dto.RegisterUserDto;
-import com.mfemachat.chatapp.models.User;
+import com.mfemachat.chatapp.dto.UserDto;
 import com.mfemachat.chatapp.security.AuthenticationManager;
 import com.mfemachat.chatapp.security.TokenProvider;
 import com.mfemachat.chatapp.service.UserService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -31,39 +32,30 @@ public class UserController {
   private AuthenticationManager authenticationManager;
 
   @PostMapping("/signup")
-  public Mono<ResponseEntity<String>> userSignUp(
+  public Mono<ResponseEntity<UserDto>> userSignUp(
     @RequestBody RegisterUserDto userDto
   ) {
     // user.setPassword(passwordEncoder.encode(user.getPassword()));
     return userService
       .createUser(
-        User
-          .builder()
-          .username(userDto.getUsername())
-          .password(passwordEncoder.encode(userDto.getPassword()))
-          .email(userDto.getEmail())
-          .firstname(userDto.getFirstname())
-          .middlename(userDto.getMiddlename())
-          .lastname(userDto.getLastname())
-          .build(),
-        userDto.getRoles()
+        userDto
       )
       .map(savedUser ->
-        ResponseEntity.status(HttpStatus.CREATED).body("Successfully registerd")
-      )
-      .onErrorResume(error -> {
-        if (error instanceof IllegalStateException) {
-          return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body("User with email already exists"));
-        } else if (error instanceof IllegalArgumentException) {
-          return Mono.just(
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid roles")
-          );
-        } else {
-          return Mono.just(
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong")
-          );
-        }
-      });
+        ResponseEntity
+          .status(HttpStatus.CREATED)
+          .body(
+            UserDto
+              .builder()
+              .username(savedUser.getUsername())
+              .email(savedUser.getEmail())
+              .firstname(savedUser.getFirstname())
+              .middlename(savedUser.getMiddlename())
+              .lastname(savedUser.getLastname())
+              .created(savedUser.getCreated())
+              .roles(savedUser.getRoles())
+              .build()
+          )
+      );
   }
 
   @PostMapping("/login")
@@ -78,35 +70,71 @@ public class UserController {
           return Mono.just(
             ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
-              .body("Incorrect email address or password")
+              .body("Incorrect email address or password!")
           );
         } else {
-          try {
-            return authenticationManager
-              .authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-              )
-              .doOnNext(authentication ->
-                SecurityContextHolder
-                  .getContext()
-                  .setAuthentication(authentication)
-              )
-              .map(authentication -> {
-                String jwt = tokenProvider.generateTokenFromUsername(email);
-                @SuppressWarnings("null")
-                ResponseCookie cookie = ResponseCookie
-                  .from("jwt", jwt)
-                  .httpOnly(true)
-                  .path("/")
-                  .build();
-                return ResponseEntity
-                  .ok()
-                  .header("Set-Cookie", cookie.toString())
-                  .body("Login Successful");
-              });
-          } catch (AuthenticationException e) {
-            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect email address or password"));
-          }
+          return userService
+            .getUserByEmail(email)
+            .flatMap(user -> {
+              if (user.getAuthProvider() != null) {
+                String message =
+                  "You signed up using " +
+                  user.getAuthProvider() +
+                  ", Please login with " +
+                  user.getAuthProvider() +
+                  "!";
+                return Mono.just(
+                  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message)
+                );
+              }
+              if (!this.passwordEncoder.matches(password, user.getPassword())) {
+                return Mono.just(
+                  ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Incorrect email address or password!!")
+                );
+              }
+              String token =
+                this.tokenProvider.generateTokenFromUserId(
+                    user.getId().toString()
+                  );
+              return authenticationManager
+                .authenticate(
+                  new UsernamePasswordAuthenticationToken(token, token)
+                )
+                .doOnNext(authentication ->
+                  SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(authentication)
+                )
+                .map(authentication -> {
+                  @SuppressWarnings("null")
+                  ResponseCookie cookie = ResponseCookie
+                    .from("token", token)
+                    .httpOnly(true)
+                    .path("/")
+                    .build();
+                  return ResponseEntity
+                    .ok()
+                    .header("Set-Cookie", cookie.toString())
+                    .body("Login Successful");
+                })
+                .onErrorResume(error -> {
+                  if (error instanceof AuthenticationException) {
+                    return Mono.just(
+                      ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body("Incorrect email address or password!!!")
+                    );
+                  } else {
+                    return Mono.just(
+                      ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body("Some error occurred")
+                    );
+                  }
+                });
+            });
         }
       });
   }

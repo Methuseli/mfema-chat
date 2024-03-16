@@ -20,6 +20,19 @@ spring:
     main:
         allow-circular-references: true
 
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: chat-consumer-group
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-serializer: org.apache.kafka.common.serialization.StringDeserializer
+
+
+
 logging:
     level:
         root: debug

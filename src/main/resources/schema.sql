@@ -24,3 +24,49 @@ CREATE TABLE IF NOT EXISTS users_roles (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
+
+
+CREATE TABLE IF NOT EXISTS messages (
+    id uuid DEFAULT uuid_generate_v4(),
+    message LONGTEXT NOT NULL,
+    sender_id uuid NOT NULL,
+    receiver_id uuid,
+    group_id uuid,
+    message_type ENUM("PRIVATE", "PUBLIC", "BROADCAST") NOT NULL,
+    created timestamptz DEFAULT current_timestamp,
+    PRIMARY KEY (id)
+)
+
+CREATE TABLE IF NOT EXISTS groups (
+    id uuid DEFAULT uuid_generate_v4(),
+    group_count SMALLINT(50) unsigned NOT NULL
+    group_name VARCHAR(255) NOT NULL,
+    group_description LONGTEXT,
+    created timestamptz DEFAULT current_timestamp,
+    PRIMARY KEY (id)
+)
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id uuid DEFAULT uuid_generate_v4(),
+    user_id uuid NOT NULL
+    description LONGTEXT,
+    profile_image_url varchar(255),
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)
+
+CREATE TABLE IF NOT EXISTS groups_users (
+    user_id uuid,
+    group_id uuid,
+    PRIMARY KEY (user_id, group_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);
+
+CREATE TABLE IF NOT EXISTS groups_admins (
+    user_id uuid,
+    group_id uuid,
+    PRIMARY KEY (user_id, group_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+);

@@ -28,32 +28,32 @@ CREATE TABLE IF NOT EXISTS users_roles (
 
 CREATE TABLE IF NOT EXISTS messages (
     id uuid DEFAULT uuid_generate_v4(),
-    message LONGTEXT NOT NULL,
+    message TEXT NOT NULL,
     sender_id uuid NOT NULL,
     receiver_id uuid,
     group_id uuid,
-    message_type ENUM("PRIVATE", "PUBLIC", "BROADCAST") NOT NULL,
+    message_type VARCHAR(15) NOT NULL,
     created timestamptz DEFAULT current_timestamp,
     PRIMARY KEY (id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS groups (
     id uuid DEFAULT uuid_generate_v4(),
-    group_count SMALLINT(50) unsigned NOT NULL
+    group_count SMALLINT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
-    group_description LONGTEXT,
+    group_description TEXT,
     created timestamptz DEFAULT current_timestamp,
     PRIMARY KEY (id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS profiles (
     id uuid DEFAULT uuid_generate_v4(),
-    user_id uuid NOT NULL
-    description LONGTEXT,
+    user_id uuid NOT NULL UNIQUE,
+    description TEXT,
     profile_image_url varchar(255),
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS groups_users (
     user_id uuid,

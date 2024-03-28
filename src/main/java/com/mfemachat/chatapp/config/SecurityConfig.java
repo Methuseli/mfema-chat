@@ -44,6 +44,8 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.web.server.session.CookieWebSessionIdResolver;
+import org.springframework.web.server.session.WebSessionIdResolver;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -129,9 +131,11 @@ public class SecurityConfig {
         ex.authenticationEntryPoint(new RestAuthenticationEntryPoint())
       )
       .csrf(csrf ->
-        csrf.csrfTokenRepository(new CookieServerCsrfTokenRepository())
-        .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler())
+        csrf
+          .csrfTokenRepository(new CookieServerCsrfTokenRepository())
+          .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler())
       )
+      // .csrf(csrf -> csrf.disable())
       .securityContextRepository(securityContextRepository())
       .authorizeExchange(authorize ->
         authorize
@@ -140,7 +144,8 @@ public class SecurityConfig {
             "/favicon.ico",
             "/api/v1/users/signup",
             "/api/v1/users/login",
-            "/csrf"
+            "/csrf",
+            "/"
           )
           .permitAll()
           .anyExchange()
@@ -194,5 +199,14 @@ public class SecurityConfig {
   @Bean
   public ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> serverAuthorizationRequestRepository() {
     return new HttpCookieOAuth2AuthorizationRequestRepository();
+  }
+
+  @Bean
+  public WebSessionIdResolver webSessionIdResolver() {
+    CookieWebSessionIdResolver resolver = new CookieWebSessionIdResolver();
+    resolver.setCookieName("JSESSIONID");
+    resolver.addCookieInitializer(builder -> builder.path("/"));
+    resolver.addCookieInitializer(builder -> builder.sameSite("Strict"));
+    return resolver;
   }
 }

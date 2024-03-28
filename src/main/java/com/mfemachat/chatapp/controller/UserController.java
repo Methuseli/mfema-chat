@@ -7,6 +7,8 @@ import com.mfemachat.chatapp.security.AuthenticationManager;
 import com.mfemachat.chatapp.security.TokenProvider;
 import com.mfemachat.chatapp.service.UserService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/v1/users")
 @AllArgsConstructor
+@Slf4j
 public class UserController {
 
   private UserService userService;
@@ -61,6 +64,8 @@ public class UserController {
   public Mono<ResponseEntity<?>> login(@RequestBody LoginDto loginDto) {
     String email = loginDto.getEmail();
     String password = loginDto.getPassword();
+
+    log.debug("Email {}", email);
 
     return userService
       .existsByEmail(email)

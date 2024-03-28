@@ -11,10 +11,16 @@ import reactor.core.publisher.Mono;
 public class CustomSQL {
 
   private DatabaseClient databaseClient;
+  // role and user relationships
   private static final String ID_USER_STRING = "userId";
   private static final String ID_ROLE_STRING = "roleId";
   private static final String USER_ID_STRING = "user_id";
   private static final String ROLE_ID_STRING = "role_id";
+
+  // groups and user relationships
+
+
+  // profiles and user relationships
 
   public CustomSQL(DatabaseClient databaseClient) {
     this.databaseClient = databaseClient;

@@ -5,9 +5,11 @@ import com.mfemachat.chatapp.security.CurrentUser;
 import com.mfemachat.chatapp.security.TokenProvider;
 import com.mfemachat.chatapp.security.UserPrincipal;
 import com.mfemachat.chatapp.service.UserService;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @RestController
+@Slf4j
 public class IndexController {
 
   @Autowired
@@ -52,11 +55,13 @@ public class IndexController {
   @GetMapping("/csrf")
   public Mono<ResponseEntity<String>> csrfToken(ServerWebExchange exchange) {
     Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
+    log.debug("Exchange attributes {}",exchange.getRequest().getCookies());
     return csrfToken.map(token -> {
       if(token == null) {
         return ResponseEntity.badRequest().build();
       } else {
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, token.getToken().toString()).body("");
+        log.debug("Token {}", token.getToken());
+        return ResponseEntity.ok().body("");
       }
     });
   }

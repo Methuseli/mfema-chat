@@ -6,8 +6,11 @@ import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttrib
 import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
+
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 public class CustomCsrfTokenRequestHandler
   extends ServerCsrfTokenRequestAttributeHandler {
 
@@ -27,6 +30,8 @@ public class CustomCsrfTokenRequestHandler
       .getRequest()
       .getCookies()
       .getFirst("XSRF-TOKEN");
+
+    log.debug("Csrf Token {}", cookie);
 
     if (cookie != null && StringUtils.hasText(cookie.getValue())) {
         String actualToken = cookie.getValue();

@@ -88,41 +88,26 @@ public class SecurityContextRepository
           );
         } else {
           log.debug("No SecurityContext found in WebSession: {}", session);
+          return CookieUtils
+          .getCookie(exchange.getRequest(), "token")
+          .map(HttpCookie::getValue)
+          .flatMap(token -> {
+            // log.info("Token {}", token);
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+              token,
+              token
+            );
+            // log.info("Authentication: {}", auth);
+            return this.authenticationManager.authenticate(auth)
+              .map(SecurityContextImpl::new);
+          });
         }
         return Mono.justOrEmpty(context);
       });
 
     log.debug("Cached context", this.cacheSecurityContext);
 
-    if (this.cacheSecurityContext) {
-      log.debug("Cache Securiy Context", this.cacheSecurityContext);
-      return result.cache();
-    } else {
-      log.debug("Security context: {}", result);
-      return result
-        .flatMap(context ->
-          context != null
-            ? Mono.justOrEmpty(context)
-            : CookieUtils
-              .getCookie(exchange.getRequest(), "token")
-              .map(HttpCookie::getValue)
-              .flatMap(token -> {
-                // log.info("Token {}", token);
-                Authentication auth = new UsernamePasswordAuthenticationToken(
-                  token,
-                  token
-                );
-                // log.info("Authentication: {}", auth);
-                return this.authenticationManager.authenticate(auth)
-                  .map(SecurityContextImpl::new);
-              })
-        )
-        .doOnError(error ->
-          log.error(
-            "Failed to create security context: {}" + error.getMessage()
-          )
-        );
-    }
+    return (this.cacheSecurityContext) ? result.cache() : result;
   }
   // @Override
   // public Mono<SecurityContext> load(ServerWebExchange exchange) {

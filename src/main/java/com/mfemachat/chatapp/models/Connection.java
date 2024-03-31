@@ -1,50 +1,39 @@
 package com.mfemachat.chatapp.models;
 
-import java.time.Instant;
-import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.mfemachat.chatapp.dto.UserDto;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table("users")
-public class User {
+@Table("connections")
+public class Connection {
 
   @Id
   private UUID id;
 
-  private String username;
+  @NonNull
+  private UUID requesterId;
 
   @NonNull
-  private String email;
+  private UUID receiverId;
 
   @NonNull
-  private String password;
-
-  @NonNull
-  private String firstname;
-
-  private String middlename;
-
-  @NonNull
-  private String lastname;
-
-  private String phoneNumber;
-
-  private Instant created;
+  @Column("request_status")
+  private RequestStatus requestStatus;
 
   @Transient
-  private Set<Role> roles;
-
-  private String authProvider;
+  private UserDto chatConnection;
 }

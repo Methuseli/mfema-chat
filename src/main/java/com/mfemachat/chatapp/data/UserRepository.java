@@ -2,10 +2,11 @@ package com.mfemachat.chatapp.data;
 
 import com.mfemachat.chatapp.models.User;
 import java.util.UUID;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Mono;
 
-public interface UserRepository extends ReactiveCrudRepository<User, UUID> {
+public interface UserRepository extends R2dbcRepository<User, UUID> {
   Mono<User> findByEmail(String email);
 
   Mono<Void> deleteByUsername(String username);

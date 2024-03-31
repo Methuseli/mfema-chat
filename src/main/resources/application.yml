@@ -10,12 +10,16 @@ spring:
                         client-id: github-id
                         client-secret: github-secret
     r2dbc:
-        url: r2dbc:postgresql://localhost:5432/chatapp
-        username: postgres
-        password: "#1Foofighters"
+        # url: r2dbc:postgresql://localhost:5432/chatapp
+        # username: postgres
+        # password: "#1Foofighters"
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    sql:
+        init:
+            mode: never
 
     main:
         allow-circular-references: true

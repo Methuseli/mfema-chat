@@ -1,11 +1,7 @@
 package com.mfemachat.chatapp.data;
 
-import java.util.UUID;
-
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
-
 import com.mfemachat.chatapp.models.Group;
+import java.util.UUID;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 
-public interface GroupRepository extends ReactiveCrudRepository<Group, UUID>{
-    
-}
+public interface GroupRepository extends R2dbcRepository<Group, UUID> {}

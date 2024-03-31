@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     middlename VARCHAR(255),
     lastname VARCHAR(50) NOT NULL,
     auth_provider VARCHAR(255),
+    phone_number VARCHAR(50),
     created timestamptz DEFAULT current_timestamp,
     PRIMARY KEY (id)
 );
@@ -69,4 +70,24 @@ CREATE TABLE IF NOT EXISTS groups_admins (
     PRIMARY KEY (user_id, group_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (group_id) REFERENCES groups(id)
+);
+
+-- DO $$
+-- BEGIN
+--     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'request_status_enum') THEN
+--         CREATE TYPE request_status_enum AS ENUM ('PENDING', 'REJECTED', 'ACCEPTED');
+--     END IF;
+-- END
+-- $$;
+
+
+-- CREATE TYPE IF NOT EXISTS request_status_enum AS ENUM ('PENDING', 'REJECTED', 'ACCEPTED'); uncomment this when launching
+CREATE TABLE IF NOT EXISTS connections (
+    id uuid DEFAULT uuid_generate_v4(),
+    requester_id uuid,
+    receiver_id uuid,
+    request_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    PRIMARY KEY (id),
+    FOREIGN KEY (requester_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
 );
